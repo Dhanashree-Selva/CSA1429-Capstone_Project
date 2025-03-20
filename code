@@ -1,0 +1,88 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+char *expr;  
+char getToken() {
+    while (*expr == ' ') expr++;  
+    return *expr;
+}
+
+void match(char expected) {
+    if (getToken() == expected) expr++;
+    else {
+        printf("Syntax Error: Unexpected character '%c'\n", *expr);
+        exit(1);
+    }
+}
+
+int exprParser();  
+int termParser();
+int factorParser();
+
+int exprParser() {
+    int result = termParser();
+    while (getToken() == '+' || getToken() == '-') {
+        char op = getToken();
+        match(op);
+        int right = termParser();
+        if (op == '+') result += right;
+        else result -= right;
+    }
+    return result;
+}
+
+int termParser() {
+    int result = factorParser();
+    while (getToken() == '*' || getToken() == '/') {
+        char op = getToken();
+        match(op);
+        int right = factorParser();
+        if (op == '*') result *= right;
+        else if (right != 0) result /= right;
+        else {
+            printf("Math Error: Division by zero\n");
+            exit(1);
+        }
+    }
+    return result;
+}
+
+int factorParser() {
+    int result = 0;
+    if (isdigit(getToken())) {  
+        while (isdigit(getToken())) {
+            result = result * 10 + (*expr - '0');
+            expr++;
+        }
+    } else if (getToken() == '(') {  
+        match('(');
+        result = exprParser();
+        match(')');
+    } else {
+        printf("Syntax Error: Unexpected character '%c'\n", *expr);
+        exit(1);
+    }
+    return result;
+}
+
+int evaluateExpression(char *input) {
+    expr = input;
+    int result = exprParser();
+    if (*expr != '\0') {
+        printf("Syntax Error: Unexpected character '%c'\n", *expr);
+        exit(1);
+    }
+    return result;
+}
+// Main function
+int main() {
+    char input[100];
+    printf("Enter a mathematical expression: ");
+    fgets(input, sizeof(input), stdin);
+    
+    char *newline = strchr(input, '\n');
+    if (newline) *newline = '\0';
+    printf("Result: %d\n", evaluateExpression(input));
+    return 0;
+}
